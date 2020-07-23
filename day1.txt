@@ -247,7 +247,12 @@ Linux设备驱动开发 9天
 		@name：变量名
 		@type: 变量的类型
 		@perm: 权限 0664 0775
-	
+		
+	MODULE_PARM_DESC(_parm, desc)
+	功能：对命令行传递的参数进行描述
+	参数：
+		@_parm：变量
+		@desc:描述的字符串
 	
 	安装驱动的时候传参：
 		sudo insmod demo.ko light=80
@@ -261,13 +266,14 @@ Linux设备驱动开发 9天
 
 
 
-	
-【7】如何下载笔记
+【10】如何下载笔记
 	www.github.com/daizhansheng/
 
-
-
-
+【11】作业：
+	1.通过命令行传参的形式传递字符类型
+	2.通过命令行传参的形式传递字符串
+	3.通过命令行传参的形式传递数组
+	module_param_array(name, type, nump, perm) 
 
 
 

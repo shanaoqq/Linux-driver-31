@@ -4,7 +4,7 @@
 int light=100;
 
 module_param(light,int,0664);
-
+MODULE_PARM_DESC(light,"this is lcd light(rang 0-100,default 100)");
 //入口
 static int __init demo_init(void)
 {
