@@ -1,0 +1,49 @@
+1.git分布式管理工具的安装
+	sudo apt-get install git
+	安装
+	
+	git --version
+	查看安装的版本
+	
+2.git软件的配置
+	$ git config --global user.name “dzs”
+	设置用户名
+	
+	$ git config --global user.email “dzs@hqyj.com”
+	设置邮箱
+	
+	$ git config --list
+	查看git的设置列表
+
+3.git本地仓库的操作
+	本地仓库<===>暂存区<===>工作区
+	
+	mkdir git  
+	创建一个git目录
+	
+	git init  
+	初始化本地仓库
+	
+	git status
+	查看git的状态
+	
+	
+	新建一个.c文件，里面写一个打印helloworld的语句，此时
+	这个.c文件在工作区
+	
+	git add 文件名（git add .//提交所有的内容）
+	将文件从当前工作区提交到暂存区
+	
+	git rm --cached 文件名
+	删除暂存区中的文件
+	
+	git commit -m "标签"
+	将暂存区中的内容提交到本地仓库
+	
+	git log  [--oneline]
+	查看git commit提交的日志(哈希值，作者，日期，文件)
+	
+	git checkout .
+	如果工作区误删除文件，可以将本地仓库内容放到工作区
+	
+	
