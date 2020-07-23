@@ -1,0 +1,261 @@
+Linux设备驱动开发 9天
+
+【1】课程大纲
+	1.Linux内核模块
+	2.字符设备驱动
+	3.并发和竞态的解决方法
+	4.IO模型
+	5.linux内核中断
+	6.Platform总线驱动
+	7.i2c总线驱动
+	8.spi总线驱动
+	9.块设备驱动
+	10.网卡设备驱动
+	
+【2】工作岗位
+	Linux设备驱动开发
+	Android设备驱动开发
+	
+【3】什么是驱动？arm裸机驱动和Linux设备驱动有什么区别？
+	驱动：通过软件驱动硬件工作的代码
+	共同点：
+		都可以驱动硬件工作
+	不同点：
+		arm裸机驱动：只能执行一份代码，在main中按照先后
+		顺序来执行，这份代码可以单独执行，不需要依赖其
+		他的代码。
+	
+		Linux设备驱动：它是基于Linux内核才能够操作硬件，
+		如果没有Linux内核，驱动不能单独执行，也不能自动
+		执行（必须通过应用层控制才能执行）。可以同时安装
+		多个Linux设备驱动
+	
+【4】Linux系统层次
+应用层：                                 [0-3G]
+		APP    glibc
+---------------(系统调用swi)------------------------------
+内核层：5大功能                          [3-4G]
+	文件管理：通过文件系统ext2 ext3 ext4 yaffs jiffe等来
+			  组织管理文件
+	内存管理：通过内存（slab）管理单元来分配和释放内存的。
+	进程管理：管理的是进程的创建，销毁，进程的调度等功能
+	网络管理：通过网络协议栈进行网络数据的收发
+	设备管理：设备驱动的管理
+		字符设备驱动：按照字节流来访问，并且是顺序访问的。
+		块设备驱动：按照块来访问（512字节），可以顺序访问
+					也可以无序访问
+		网卡设备驱动：网卡设备驱动是没有设备文件存在的。
+				   （通过这种设备进行网络数据传输）
+----------------------------------------------------------
+硬件层：LED CAMERA LCD TOUCHSCREEN 
+		声卡 显卡 BEEP USB鼠标 U盘   硬盘
+		FLASH  交换机 路由器  猫  网卡等
+
+
+【5】Linux设备驱动的使用
+	demo.c    <==== 字符设备驱动
+	
+	Kconfig :生成选项菜单的文件
+		 /home/linux/kernel/kernel-3.4.39/drivers/char
+		 
+		config FARSIGHT_DEMO (选项名)
+		tristate "test test test ..." (选项菜单名)
+		help
+			this is a driver demo 
+
+	.config  :保存选配号的选项
+		CONFIG_FARSIGHT_DEMO=y
+		CONFIG_FARSIGHT_DEMO=m 
+		#CONFIG_FARSIGHT_DEMO is not set
+		
+	Makefile :用来编译驱动模块的
+		obj-$(CONFIG_FARSIGHT_DEMO) += demo.o
+
+		obj-y +=demo.o
+		obj-m +=demo.o
+	
+
+	编译：
+		y:
+		make uImage  ===>将驱动编译到uImage中
+		
+		m:
+		make modules ===>将驱动编译生成xxx.ko文件
+		
+【6】linux内核模块		
+		
+	模块三要素：内核模块不能单独执行，也不能自动自行
+	
+	入口
+		static int __init demo_init(void)
+		{
+			return 0;
+		}
+		module_init(demo_init);
+	出口
+		static void __exit demo_exit(void)
+		{
+			
+		}
+		module_exit(demo_exit);
+	许可证
+		MODULE_LICENSE("GPL");
+
+
+	内部编译：在内核源码树中编译
+	外部编译：在内核源码树外进行编译
+	
+	Makefile：
+		KERNELDIR:= /lib/modules/$(shell uname -r)/build/
+		//这是Makefile中的一个变量，记录ubuntu内核的路径的
+		//$(shell 命令) 在Makefile中起一个终端，执行命令，将
+		//将命令执行的结果作为返回值
+		PWD:=$(shell pwd)
+		//PWD它是记录驱动所在目录的一个变量。
+
+		all:
+			//all是make执行的时候的默认的标签，
+			//这个all的名字也可以随意指定(如modules)
+			make -C $(KERNELDIR) M=$(PWD) modules
+			//make -C dir  进入到dir目录下执行它里面的Makefile文件
+			//M  它是记录程序当前路径的一个变量
+			//make modules 编译模块，只编译M指定的目录下的模块
+			
+		clean:
+			make -C $(KERNELDIR) M=$(PWD) clean
+			//make -C dir  进入到dir目录下执行它里面的Makefile文件
+			//M= 它是记录程序当前路径的一个变量
+			//make clean 清除编译，只清除M指定的目录下的模块文件
+		
+		obj-m:=demo.o  
+		//指定的要编译的模块的名字
+
+	Makefile中四种赋值的区别？
+		=  
+			查找Makefile中变量最后一次被赋值
+			的结果，然后将它赋值给新的变量
+			var1=abc
+			var2=$(var1)
+			var1=def
+
+																										
+			all:
+				@echo $(var1)   #def
+				@echo $(var2)   #def
+
+		:=  立即赋值
+			var1=abc
+			var2:=$(var1)
+			var1=def
+																										
+			all:
+				@echo $(var1)  #def
+				@echo $(var2)  #abc
+		               
+		+=  附加赋值
+			var1=abc                                                                                    
+			var2=def
+			var2+=$(var1)
+
+			all:
+				@echo $(var1) #abc
+				@echo $(var2) #def abc
+		                 
+		?= 询问赋值：询问变量之前是否被赋值过，
+			如果变量之前没有被赋值过本次赋值成立，
+			否则本次赋值不成立
+			var1?=def
+
+			all:
+				@echo $(var1)   #def
+		
+			var1=abc
+			var1?=def
+
+			all:
+				@echo $(var1)   #abc
+	
+【7】驱动安装和卸载的命令
+	sudo insmod xxx.ko   安装驱动
+	lsmod                查看模块是否被安装了
+	sudo rmmod xxx       卸载驱动
+	modinfo xxx.ko       查看模块中的各种信息的命令
+	
+
+
+【8】内核打印函数
+	printk(打印级别 "控制格式",变量);
+	printk("控制格式",变量);  //使用的是默认级别
+	内核的八个打印级别如下，数字越小优先级越高。
+	#define KERN_EMERG  "<0>"  
+	/* system is unusable */
+	#define KERN_ALERT  "<1>"   
+	/* action must be taken immediately */
+	#define KERN_CRIT   "<2>"  
+	/* critical conditions */                  
+	#define KERN_ERR    "<3>"   
+	/* error conditions  */
+	#define KERN_WARNING    "<4>"   
+	/* warning conditions  */
+	#define KERN_NOTICE "<5>"   
+	/* normal but significant condition */
+	#define KERN_INFO   "<6>"  
+	/* informational  */
+	#define KERN_DEBUG  "<7>"  
+	/* debug-level messages */
+
+
+	打印级别问题：
+	proc/sys/kernel$ ls printk
+	linux@ubuntu:/proc/sys/kernel$ cat printk
+	4	          4             	1	           7
+	终端的级别    消息的默认级别   终端的最大级别  终端的最小级别
+
+	
+	只有当消息的级别大于终端的级别的
+	时候，消息才会显示。
+	
+	由于ubuntu的终端已经被开发者修改过了，所以
+	即使消息的级别大于控制台的级别，消息依然不会
+	显示，使用虚拟控制台才执行代码
+	
+	ctrl +alt +[F1-F6]  进入虚拟终端
+	ctrl +alt + F7      退出虚拟终端
+	
+	
+	修改默认级别的办法：
+	su root
+	echo 4 3 1 7 > /proc/sys/kernel/printk
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+
+	
+【7】如何下载笔记
+	www.github.com/daizhansheng/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	
