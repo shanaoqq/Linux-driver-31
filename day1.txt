@@ -180,8 +180,9 @@ Linux设备驱动开发 9天
 	lsmod                查看模块是否被安装了
 	sudo rmmod xxx       卸载驱动
 	modinfo xxx.ko       查看模块中的各种信息的命令
-	
-
+	dmesg                查看printk打印的消息
+	sudo dmesg -c        先在终端上显示一遍，然后清空消息  
+	sudo dmesg -C         直接清空消息
 
 【8】内核打印函数
 	printk(打印级别 "控制格式",变量);
@@ -207,7 +208,7 @@ Linux设备驱动开发 9天
 
 	打印级别问题：
 	proc/sys/kernel$ ls printk
-	linux@ubuntu:/proc/sys/kernel$ cat printk
+	cat /proc/sys/kernel/printk
 	4	          4             	1	           7
 	终端的级别    消息的默认级别   终端的最大级别  终端的最小级别
 
@@ -222,7 +223,6 @@ Linux设备驱动开发 9天
 	ctrl +alt +[F1-F6]  进入虚拟终端
 	ctrl +alt + F7      退出虚拟终端
 	
-	
 	修改默认级别的办法：
 	su root
 	echo 4 3 1 7 > /proc/sys/kernel/printk
@@ -230,12 +230,34 @@ Linux设备驱动开发 9天
 	
 	
 	
+【9】内核模块传参问题
+	在工作中做开发的时候，在购买屏幕硬件的时候，给你提供了
+	这个屏幕的驱动（xxx.ko），比如通过命令行传参的形式修改
+	屏幕的默认最大亮度。
+	
+	Standard types are:
+		byte, short, ushort, int, uint, long, ulong 注意：没有char类型！！
+		charp: a character pointer
+		bool: a bool, values 0/1, y/n, Y/N.
+		invbool: the above, only sense-reversed (N = true).  
+	
+	module_param(name, type, perm)  
+	功能：接收命令行传的参数
+	参数：
+		@name：变量名
+		@type: 变量的类型
+		@perm: 权限 0664 0775
 	
 	
-	
-	
-	
-
+	安装驱动的时候传参：
+		sudo insmod demo.ko light=80
+		
+	在运行的使用传参
+		/sys/module/驱动命名的目录/parameters/
+		以变量命名的文件
+		
+		su root
+		echo 70 > light
 
 
 
