@@ -1,0 +1,1 @@
+*.c;*.h;*.S;*.lds;*defconfig;*Makefile;*.mak;*.dts;*.dtsi

@@ -252,17 +252,42 @@ int register_chrdev(unsigned int major,
 		成功返回0，失败返回未拷贝的字节的个数
 	
 		
-		
-		
-		
-		
 【6】驱动和硬件的交互过程
+	由于驱动运行在3-4G的虚拟地址中，LED灯的
+	控制寄存器它是物理地址。所以如果想在内核空间
+	操作物理地址，需要将物理地址映射成虚拟地址。
+	
+	void *ioremap(phys_addr_t offset, unsigned long size)   
+	功能：将物理地址映射成虚拟地址
+	参数：
+		@offset:物理地址
+		@size  :映射的长度(字节)
+	返回值：成功返回虚拟地址，失败返回NULL
 
 
+	void iounmap(void *addr)                                          
+	功能：取消映射
+	参数：
+		@addr:虚拟地址
+	返回值：无
 
 
+【7】source insight创建索引的过程
+	1.解压内核
+		将系统移植课上的内核的源码在windows上解压
+		（不能和ubuntu通过共享目录共享这份内核代码）
+	
+	2.创建索引的工程
+		project->new project->填写工程的名字，选择内核源码
+		的路径->ok ->ok-->选中内核源码目录-->add all-->
+		会看到有3万多个文件--->close
+	3.创建索引
+		project->sychronize files->把能选的对号都选上->ok 
+		
 
-
+作业 ：
+	1.将开发板上的红绿蓝三个灯点亮（流水灯）;
+	2.安装source insight软件
 
 
 
