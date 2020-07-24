@@ -108,8 +108,86 @@
 	卸载：
 		先卸载调用者，在卸载提供者
 
+【3】字符设备驱动
+用户空间：		
 	
+	open    read   write    close
+----------------------------------------------
+		/dev/myled(c字符设备文件)
+-----------------|----------------------------
+内核空间：       |
+			字符设备驱动
+			------------       struct file_operations{ 
+			| led_open |      	int (*open)();
+			| led_write|		int (*read)();
+			| led_read |		int (*write)();
+			| led_close|		int (*close)()
+			------------      };
+---------------|------------------------------
+硬件层：	 LED
 	
-	
-	
+vi -t register_chrdev
+
+int register_chrdev(unsigned int major, 
+					const char *name,                     
+                  const struct file_operations *fops)
+功能：注册一个字符设备驱动
+参数：
+	@major :主设备号
+		major>0 系统认为这个major就是主设备号
+		major=0 系统自动分配一个主设备号
 		
+	设备号（32位）=主设备号（高12）+次设备号（低20）
+	主设备号：它是哪一类设备 LED UART BEEP WDT
+	次设备号：同类中的第几个设备
+	
+	@name :给你的字符设备驱动起的名字
+		通过 cat /proc/devices 可以查看
+		Character devices:
+		  1 		mem
+		  4 		/dev/vc/0
+		  4 		tty
+		  4 		ttyS
+		  5 		/dev/tty
+		  5 		/dev/console
+		  5 		/dev/ptmx
+		  5 		ttyprintk
+		  6 		lp
+		  7 		vcs
+		  |          |
+		  主设备号  名字
+	
+	@fops:操作方法结构体
+		vi  -t file_operations
+		struct file_operations {
+			ssize_t (*read) (struct file *,
+				char __user *, size_t, loff_t *);
+				
+			ssize_t (*write) (struct file *, 
+				const char __user *, size_t, loff_t *);
+			int (*open) (struct inode *, struct file *);
+			int (*release) (struct inode *, struct file *);
+		}
+	
+返回值：
+	major>0	 成功返回0，失败返回错误码（负数）
+	major=0	 成功返回主设备号，失败返回错误码
+	
+--------------------------------------------------------------	
+  vi -t unregister_chrdev
+ void unregister_chrdev(unsigned int major, const char *name)    
+ 功能：注销一个字符设备驱动
+ 参数：
+	@major：主设备号
+	@name : 名字
+返回值：无
+
+	指定驱动文件的tags就是内核顶层的tags
+	:set tags=/home/linux/kernel/kernel-3.4.39/tags
+
+
+
+
+
+
+
