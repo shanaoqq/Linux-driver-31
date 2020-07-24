@@ -1,3 +1,4 @@
+MODNAME?=demo
 KERNELDIR:= /lib/modules/$(shell uname -r)/build/
 #KERNELDIR:= /home/linux/kernel/kernel-3.4.39/
 PWD:=$(shell pwd)
@@ -7,4 +8,4 @@ all:
 clean:
 	make -C $(KERNELDIR) M=$(PWD) clean
 
-obj-m:=mycdev.o
+obj-m:=$(MODNAME).o

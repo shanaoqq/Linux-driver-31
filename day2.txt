@@ -120,7 +120,7 @@
 			------------       struct file_operations{ 
 			| led_open |      	int (*open)();
 			| led_write|		int (*read)();
-			| led_read |		int (*write)();
+mycdev.ko	| led_read |		int (*write)();
 			| led_close|		int (*close)()
 			------------      };
 ---------------|------------------------------
@@ -186,8 +186,37 @@ int register_chrdev(unsigned int major,
 	:set tags=/home/linux/kernel/kernel-3.4.39/tags
 
 
-
-
-
-
-
+【4】驱动的测试流程
+	1.安装驱动
+		sudo insmod mycdev.ko
+		
+	2.查看字符设备驱动是否创建成功
+		cat /proc/devices 
+		250       mycdev
+		|          |
+		主设备号  名字
+	3.创建设备文件（mknod）
+		sudo mknod 路径/设备文件的名字  c/b  主设备号   次设备号
+		sudo mknod /dev/mycdev c 250 0
+		
+		
+	4.编写应用程序
+		在应用程序中调用open  read  write  close函数
+		
+		
+	5.执行应用程序
+		sudo ./a.out
+		或者
+		sudo chmod 777 /dev/mycdev
+		./a.out
+	6.查看
+		dmesg
+		如果看到驱动中的open read  write close都打印了
+		说明，应用程序调用驱动就成功了。
+		
+		
+		
+		
+		
+		
+		
