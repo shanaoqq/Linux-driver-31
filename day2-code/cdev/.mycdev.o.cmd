@@ -539,6 +539,12 @@ deps_/home/linux/Linux-driver-31/day2-code/cdev/mycdev.o := \
   include/linux/fcntl.h \
   /usr/src/linux-headers-3.5.0-23-generic/arch/x86/include/asm/fcntl.h \
   include/asm-generic/fcntl.h \
+  include/linux/uaccess.h \
+  /usr/src/linux-headers-3.5.0-23-generic/arch/x86/include/asm/uaccess.h \
+    $(wildcard include/config/x86/wp/works/ok.h) \
+    $(wildcard include/config/x86/intel/usercopy.h) \
+  /usr/src/linux-headers-3.5.0-23-generic/arch/x86/include/asm/uaccess_32.h \
+    $(wildcard include/config/debug/strict/user/copy/checks.h) \
 
 /home/linux/Linux-driver-31/day2-code/cdev/mycdev.o: $(deps_/home/linux/Linux-driver-31/day2-code/cdev/mycdev.o)
 

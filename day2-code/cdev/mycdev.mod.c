@@ -20,6 +20,8 @@ __attribute__((section("__versions"))) = {
 	{ 0x35ec255d, "module_layout" },
 	{ 0x6bc3fbc0, "__unregister_chrdev" },
 	{ 0xc8e0b6e7, "__register_chrdev" },
+	{ 0x2f287f0d, "copy_to_user" },
+	{ 0x362ef408, "_copy_from_user" },
 	{ 0x50eedeb8, "printk" },
 	{ 0xb4390f9a, "mcount" },
 };
@@ -30,4 +32,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "C6DF8C391FFD3C3A37345BF");
+MODULE_INFO(srcversion, "3BCC0B1D1A71396E58A92EE");

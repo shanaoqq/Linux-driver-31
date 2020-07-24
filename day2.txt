@@ -196,7 +196,7 @@ int register_chrdev(unsigned int major,
 		|          |
 		主设备号  名字
 	3.创建设备文件（mknod）
-		sudo mknod 路径/设备文件的名字  c/b  主设备号   次设备号
+		sudo mknod 路径（任意）/设备文件的名字  c/b  主设备号   次设备号
 		sudo mknod /dev/mycdev c 250 0
 		
 		
@@ -214,9 +214,62 @@ int register_chrdev(unsigned int major,
 		如果看到驱动中的open read  write close都打印了
 		说明，应用程序调用驱动就成功了。
 		
+	练习:
+		在给大家10分钟的时间练习字符设备驱动
+		
+【5】用户空间和内核空间数据传递
+	在内核中有asm/uaccess.h或者asm-generic/uaccess.h
+	里面写的都是同样类型的函数，如果包含头文件的时候
+	写上其中一种，可能在当前的内核版本中编译能通过，
+	换一个内核版本编译就通过不了了，把前面的asm换成
+	linux/uaccess.h，这是一个链接文件，它总能链接到正确
+	的头文件的位置。
+	
+	#include <linux/uaccess.h>
+	
+	unsigned long copy_from_user(void *to, 
+		const void __user *from, unsigned long n)
+	功能：将数据从用户空间拷贝到内核空间
+	参数：
+		@to  :内核空间的首地址
+		@from:用户空间的首地址
+		@n   :拷贝的字节的个数
+	返回值：
+		成功返回0，失败返回未拷贝的字节的个数
+		
+	内核中错误码问题：
+		vi -t EIO;
+		
+	unsigned long copy_to_user(void __user *to, 
+		const void *from, unsigned long n)
+	
+	功能：将数据从内核空间拷贝到用户空间
+	参数：
+		@to  :用户空间的首地址
+		@from:内核空间的首地址
+		@n   :拷贝的字节的个数
+	返回值：
+		成功返回0，失败返回未拷贝的字节的个数
+	
 		
 		
 		
 		
+		
+【6】驱动和硬件的交互过程
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 		
 		
