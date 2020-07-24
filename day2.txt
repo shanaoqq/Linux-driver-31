@@ -1,0 +1,115 @@
+【1】复习
+	1.驱动的种类
+		字符设备驱动：按照字节流来访的，并且顺序访问。
+					90%设备都对应字符设备驱动。
+					帧缓存设备驱动：LCD
+		块设备驱动：按照block来访问，访问的单位512字节
+					它可以顺序访问，也可以无序访问。
+		网卡设备驱动：和网络通讯相关的设备
+		
+	2.内核模块
+		入口
+		static int __init demo_init(void)
+		{
+			//在安装驱动的时候执行
+			//资源分配
+			return 0;
+		}
+		module_init(demo_init);
+		
+		出口
+		static void __exit demo_exit(void)
+		{
+			//在卸载的时候执行
+			//资源释放	
+		}
+		
+		module_exit(demo_exit);
+		许可证
+		MODULE_LICENSE("GPL");
+		
+	3.编译
+		内部编译：在内核源码树中进行编译
+			Kconfig .config Makefile
+		外部编译：在内核源码树外进行编译
+		Makefile：
+			KERNELDIR:=/lib/modules/$(shell uname -r)/build/
+			#KERNELDIR:=/home/linux/kernel/kernel-3.4.39/
+			PWD:=$(shell pwd)
+			
+			modules:
+				make -C $(KERNELDIR) M=$(PWD) modules
+		
+			clean:
+				make -C $(KERNELDIR) M=$(PWD) clean
+			obj-m:=demo.o
+		
+		静态编译：
+			将驱动编译到uImage中，它是内部模块
+		动态编译：
+			编译生成外部模块xxx.ko，在运行的时候必须依赖uImage
+			
+		
+	4.打印
+		printk(打印级别 "想打印的内容");
+		printk("想打印的内容");  //使用默认打印级别
+		
+		cat /proc/sys/kernel/printk
+		4  4   1   7
+		su root
+		echo  4  3 1 7 > /proc/sys/kernel/printk
+		
+		dmesg 主动查看内核的打印信息
+		sudo dmesg -C
+		sudo dmesg -c
+	5.模块传参
+		module_param(变量名，变量类型，权限);
+		MODULE_PARM_DESC(变量名，"描述字段");
+		
+	6.作业：
+	1.通过命令行传参的形式传递字符类型
+		//只能传递整数，不能传递字符
+	2.通过命令行传参的形式传递字符串
+		//在命令行中不允许传递空格
+	3.通过命令行传参的形式传递数组
+	module_param_array(name, type, nump, perm) 
+	功能：接收整型的数组
+	参数：
+		@name :数组名
+		@type :数组的类型
+		@nump :命令行传递的参数的个数
+		@perm :权限
+	
+	sudo insmod demo.ko light=50 tt=65
+		p="www.hqyj.com" ww=11,22,33
+
+【2】内核模块中导出符号表
+	导出符号表可以让一个内核模块，调用另外一个
+	内核模块中的函数，它可以让linux更简约，防止
+	代码冗余的现象。还可以让驱动工程师写否写复杂
+	驱动的时候更简答。
+	
+	EXPORT_SYMBOL_GPL(sym)  
+	功能：将函数或者变量的符号表导出
+	参数：
+		@sym:函数名或者变量名
+	
+	
+	编译：
+		1.先编译提供者模块，编译完之后会产生一个
+		Module.symvers，这个文件中记录的就是函
+		数的名字及地址
+		
+		2.在编译调用者前需要将Module.symvers拷贝到
+		调用者目录下，然后执行make,如果不拷贝会提示
+		add undefined
+	安装：
+		先安装提供者，在安装调用者
+	卸载：
+		先卸载调用者，在卸载提供者
+
+	
+	
+	
+	
+		

@@ -1,0 +1,1 @@
+cmd_/home/linux/Linux-driver-31/day2-code/export/b/demoB.ko := ld -r -m elf_i386 -T /usr/src/linux-headers-3.5.0-23-generic/scripts/module-common.lds --build-id  -o /home/linux/Linux-driver-31/day2-code/export/b/demoB.ko /home/linux/Linux-driver-31/day2-code/export/b/demoB.o /home/linux/Linux-driver-31/day2-code/export/b/demoB.mod.o
