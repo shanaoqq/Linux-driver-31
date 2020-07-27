@@ -48,8 +48,6 @@ fops:long (*unlocked_ioctl) (struct file *,
 	应用层的ioctl被调用的时候驱动的fops中的
 	unlocked_ioctl就会被执行。
 
-
-
 	request这个32位请求码，每个部分的含义
 	 31-30  00 - no parameters: uses _IO macro
 		10 - read: _IOR
@@ -91,9 +89,106 @@ fops:long (*unlocked_ioctl) (struct file *,
 	#define RED_ON   _IO('a',0)
 	#define RED_OFF  _IO('a',1)
 	
-	
-	
-	
-	
-	
+-------------------------------------------------------------
+PM:
+	练习：
+		1.从用户空间向内核空间传递char [50]字符串，在
+		  内核中打印显示
+		2.将这份数据从内核空间传递到用户空间，打印显示
 		
+		#define ACCESS_DATA_R _IOR('a',0,int)
+		#define ACCESS_DATA_W _IOW('a',0,int)
+		case ACCESS_DATA_R:
+			ret = copy_to_user((void *)args,&data,4);
+
+			break;
+		case ACCESS_DATA_W:
+			ret = copy_from_user(&data,(void *)args,4);
+
+
+
+【1】git下载代码
+	1.安装git
+		sudo apt-get install git
+	2.下载命令
+		git clone https://github.com/daizhansheng/Linux-driver-31.git
+
+
+【2】自动创建设备节点的过程
+user	hotplug ---------------> udev/mdev
+		|                       |----->/dev/设备节点名
+		|/sys/class/目录/设备名
+--------|-------------------------------------
+kernel	|
+		|
+	1.提交目录
+	class_create(owner, name)	
+	2.提交设备名
+	struct device *device_create(struct class *class,
+	struct device *parent,dev_t devt, void *drvdata, 
+	const char *fmt, ...)
+
+	创建设备节点的函数接口讲解如下：
+	1.class_create(owner, name)
+	功能：提交目录
+	参数：
+		@owner :THIS_MODULE
+			(以后所有的驱动遇到owner就写THIS_MODULE,
+			编译驱动之后会生成一个文件，这个文件通过this_module
+			记录程序的入口和出口)
+		@name :目录名
+		
+	返回值：成功返回struct class *的结构体指针，
+			失败返回错误码指针(void *)-5;
+	
+	
+	cls = class_create(owner, name);
+	思考如何判断这个函数返回的错误？
+	
+	*((int *)ret) < 0  错误
+	sizeof(*ret) == 4; 错误
+	
+	IS_ERR(cls)
+	如果返回值为真，表示他是一个错误，否则不是一个错误。
+	
+	ERR_PTR(long error)
+	将错误码转化为错误码指针
+	
+	PTR_ERR(const void *ptr)
+	将错误码指针转化为错误码
+	
+	2.struct device *device_create(struct class *class,
+	struct device *parent,dev_t devt, void *drvdata, 
+	const char *fmt, ...)
+	功能：提交设备节点名
+	参数：
+		@class ：cls的结构体指针
+		@parent：NULL
+		@devt  : 设备号
+		@drvdata：NULL
+		@fmt   ：设备节点的名字
+	返回值：成功返回struct device *的结构体指针，
+			失败返回错误码指针
+	
+
+	MKDEV(ma,mi) //根据主次设备号合成设备号
+	MAJOR(dev)   //根据设备号得到主设备号
+	MINOR(dev)   //根据设备号得到次设备号
+	
+	
+	void class_destroy(struct class *cls)
+	功能：注销class
+	
+	
+	void device_destroy(struct class *class, dev_t devt)
+	功能：注销device
+	
+	
+作业：
+	1.编写RGB-led驱动,为红绿蓝创建3个设备节点。
+	2.思考
+		写1   myled0   红灯亮
+		写1   myled1   绿灯亮
+		写1   myled2   蓝灯亮
+
+	

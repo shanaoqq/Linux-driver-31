@@ -3,6 +3,7 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 #include <linux/io.h>
+#include <linux/device.h>
 #include "cmd.h"
 
 #define CNAME "myled" 
@@ -23,6 +24,8 @@ char sbuf[50] = {0};
 unsigned int *red_virt_base = NULL;
 unsigned int *green_virt_base = NULL;
 unsigned int *blue_virt_base = NULL;
+struct class *cls = NULL;
+struct device *dev = NULL;
 
 enum RGB_LED{
 	RED,
@@ -110,7 +113,7 @@ long myled_ioctl(struct file *file, unsigned int cmd, unsigned long args)
 			}
 			break;
 		case ACCESS_STRING_R:
-			ret = copy_to_user((void *)args,sbuf,(ACCESS_STRING_W>>16)&0x3fff);
+			ret = copy_to_user((void *)args,sbuf,(ACCESS_STRING_R>>16)&0x3fff);
 			if(ret){
 				printk("ioctl:copy string to user error\n");
 				return -EINVAL;
@@ -176,18 +179,39 @@ static int __init myled_init(void)
 	*(green_virt_base + OUTENB) |= (1<<13);  
 	*(green_virt_base + OUT   ) &= ~(1<<13); 
 
+
+	//4.创建设备节点
+	cls = class_create(THIS_MODULE,"aaaa");
+	if(IS_ERR(cls)){
+		printk("class create error\n");
+		return PTR_ERR(cls);
+	}
+	//major<<20|0  =设备号
+	//设备号=主设备号(12) +次设备号(20)
+	//MKDEV(ma,mi) //通过主设备和次设备号合成设备号
+	dev =  device_create(cls,NULL,MKDEV(major,0),NULL,"myled");
+	if(IS_ERR(dev)){
+		printk("class device error\n");
+		return PTR_ERR(dev);
+	}
+	
 	return 0;
 }
 
 static void __exit myled_exit(void)
 {
-	//1.注销字符设备驱动
-	unregister_chrdev(major,CNAME);
-
+	//1.注销设备节点
+	device_destroy(cls,MKDEV(major,0));
+	class_destroy(cls);
+	
 	//2.取消映射
 	iounmap(red_virt_base);
 	iounmap(blue_virt_base);
 	iounmap(green_virt_base);
+	
+	//3.注销字符设备驱动
+	unregister_chrdev(major,CNAME);
+
 }
 module_init(myled_init);
 module_exit(myled_exit);
