@@ -3,6 +3,7 @@
 #include <linux/fs.h>
 #include <linux/uaccess.h>
 #include <linux/io.h>
+#include "cmd.h"
 
 #define CNAME "myled" 
 #define RED_PHY_BASE 0xc001a000   //a28
@@ -55,12 +56,12 @@ ssize_t myled_write (struct file *file,
 		printk("copy data from user error\n");
 		return -EIO;
 	}
-
+	//kbuf[2] = {which,status};
 	//2.根据用户空间的数据进行点灯
 	switch(kbuf[0]){
 		case   RED: 
 			kbuf[1]?(*(red_virt_base + OUT) |= (1<<28)):\
-				(*(red_virt_base + OUT ) &= ~(1<<28));
+				(*(red_virt_base + OUT) &= ~(1<<28));
 			break;
 		case GREEN: 	
 			kbuf[1]?(*(green_virt_base + OUT) |= (1<<13)):\
@@ -74,6 +75,18 @@ ssize_t myled_write (struct file *file,
 
 	return size;
 }
+long myled_ioctl(struct file *file, unsigned int cmd, unsigned long args)
+{
+	switch(cmd){
+		case RED_ON:
+			*(red_virt_base + OUT) |= (1<<28);
+			break;
+		case RED_OFF:
+			*(red_virt_base + OUT) &= ~(1<<28);
+			break;
+	}
+	return 0;
+}
 
 int myled_close(struct inode *inode, struct file *file)
 {
@@ -85,6 +98,7 @@ const struct file_operations fops = {
 	.open = myled_open,
 	.read = myled_read,
 	.write = myled_write,
+	.unlocked_ioctl = myled_ioctl,
 	.release = myled_close,
 };
 
@@ -128,7 +142,6 @@ static int __init myled_init(void)
 	*(green_virt_base + OUTENB) |= (1<<13);  
 	*(green_virt_base + OUT   ) &= ~(1<<13); 
 
-	
 	return 0;
 }
 

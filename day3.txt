@@ -1,0 +1,99 @@
+【1】复习
+	1.内核模块
+		入口  出口  许可证
+	2.内核中打印函数
+		printk(打印级别 "想要打印的内容");
+		printk("想要打印的内容");
+	3.模块传参
+		sudo insmod demo.ko a=100
+		/sys/module/驱动名/
+		module_param(变量名，类型，权限);
+		module_param_array(变量名，类型，长度，权限);
+		MODULE_PARM_DESC(变量，“字符串”);
+		
+	4.模块导出符号表
+		EXPORT_SYMBOL_GPL(变量名/函数名);
+	5.字符设备驱动
+		major = register_chrdev(major,name,&fops);
+		unregister_chrdev(major,name);
+	6.数据传输
+		copy_from_user();
+		copy_to_user();
+		
+	7.地址映射
+		虚拟地址 = ioremap(物理地址,长度)
+		iounmap(虚拟地址);
+		
+	练习：
+		1.使用字符设备驱动点灯
+		
+【2】ioctl使用
+	man ioctl
+	
+    #include <sys/ioctl.h>
+    int ioctl(int fd, int request, ...);
+	功能：input /output control device
+	参数：
+		@fd     :打开设备得到的文件描述符
+		@request:通过同宏_IO _IOR _IOW  _IOWR封装的请求码
+		@...    :可变参数
+---------------------------------------------
+fops:long (*unlocked_ioctl) (struct file *,
+		unsigned int cmd, unsigned long args);	
+		参数：
+			cmd:就是用户空间传递过来的request
+			args:就是用户空间传递过来的...
+	
+
+	应用层的ioctl被调用的时候驱动的fops中的
+	unlocked_ioctl就会被执行。
+
+
+
+	request这个32位请求码，每个部分的含义
+	 31-30  00 - no parameters: uses _IO macro
+		10 - read: _IOR
+		01 - write: _IOW
+		11 - read/write: _IOWR
+
+	 29-16  size of arguments
+
+	 15-8   ascii character supposedly
+		unique to each driver
+
+	 7-0    function #
+                       
+	#define _IO(type,nr)		
+		_IOC(_IOC_NONE,(type),(nr),0)
+		
+	#define _IOR(type,nr,size)	
+		_IOC(_IOC_READ,(type),(nr),(sizeof(size)))
+	#define _IOW(type,nr,size)	
+		_IOC(_IOC_WRITE,(type),(nr),(sizeof(size)))
+	#define _IOWR(type,nr,size)	
+		_IOC(_IOC_READ|_IOC_WRITE,(type),(nr),(sizeof(size)))
+
+
+	#define _IOC(dir,type,nr,size) \
+	(((dir)  << _IOC_DIRSHIFT) | \
+	 ((type) << _IOC_TYPESHIFT) | \
+	 ((nr)   << _IOC_NRSHIFT) | \
+	 ((size) << _IOC_SIZESHIFT))
+
+
+	 2       14        8      8
+	 dir     size     type    nr
+		
+	#define VFAT_IOCTL_READDIR_BOTH        
+		_IOR('r', 1, struct dirent [2])
+	
+	
+	#define RED_ON   _IO('a',0)
+	#define RED_OFF  _IO('a',1)
+	
+	
+	
+	
+	
+	
+		

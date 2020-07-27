@@ -3,11 +3,10 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-// 0 1 2 
-// R G B
-// 0   1
-// OFF ON
-char ubuf[2] = {0,0};
+#include <sys/ioctl.h>
+
+#include "cmd.h"
+
 int main(int argc, const char *argv[])
 {
 	int fd;
@@ -18,13 +17,10 @@ int main(int argc, const char *argv[])
 	}
 
 	while(1){
+		ioctl(fd,RED_ON);	
 		sleep(1);
-		
-		//ubuf[1] = !ubuf[1];  
-		
-		ubuf[1] = ubuf[1]?0:1;
-
-		write(fd,ubuf,sizeof(ubuf));
+		ioctl(fd,RED_OFF);	
+		sleep(1);
 	}
 
 	close(fd);
