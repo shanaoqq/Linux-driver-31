@@ -1,0 +1,106 @@
+【1】复习
+	1.ioctl函数的使用
+		ioctl(fd,100,100)
+	---------------------
+		unlocked_ioctl(file,cmd,args)
+		{
+			printk("cmd = %d,args = %d\n",cmd,args);
+			//cmd=100 args=100;
+		}
+		命令码通过 ===>_IO _IOR _IOW _IORW封装
+	2.自动创建设备节点
+		class_create
+		device_create
+		class_destroy
+		device_destroy
+		
+【2】字符设备驱动的框架
+user:
+	open("设备文件的名字",打开方式);  write(fd,buf,sizeof(buf));
+			|
+		设备文件名	---->ls -i ----->inode号（文件系统识别文件方式）
+									  |
+--------------------------------------|-----------------
+kernel:                               |
+						--------------|
+						|
+					struct inode{ 
+						//文件所有的信息全在inode记录着
+						umode_t	 i_mode; //文件权限
+						uid_t	 i_uid;  //用户id
+						gid_t	 i_gid;	 //组id
+						unsigned long i_ino; //inode号
+						dev_t	 i_rdev;  //设备号
+						union {
+							struct block_device	*i_bdev;
+							//块设备驱动
+							struct cdev		*i_cdev;
+							//字符设备驱动
+						};
+					}
+					 
+	设备号1			  设备号2		       设备号n	
+	字符设备驱动1    字符设备驱动2       字符设备驱动n
+	---------         ---------            ---------
+	|  		|        |  	   |           |  		|
+	|  		|        |  	   |           |  		|
+	|  		|        |  	   |           |  		|
+	---------        ----------     ...    ----------
+
+	1.字符设备驱动的结构体
+	struct cdev {
+		const struct file_operations *fops;
+		//操作方法结构体
+		struct list_head list;
+		//内核链表
+		dev_t dev;
+		//设备号
+		unsigned int count;
+		//同种设备的个数
+	};
+
+
+
+	问：在应用程序中read write ioctl close如何通过
+	fd找到驱动的fops并调用里面对应的函数的？
+	
+	1.open read write ioctl close函数是在哪里执行的？
+		在进程中，进程的结构体对象是task_struct
+		
+	2.既然fd是在进程中产生的，那么它就会在进程
+		结构体中有记录
+		struct task_struct {
+			volatile long state;
+			//进程的状态
+			int prio, static_prio, normal_prio;
+			unsigned int rt_priority;
+			//进程的优先级
+			pid_t pid;
+			//进程号
+			struct thread_struct thread;
+			//进程中的线程
+			struct files_struct *files;
+			//打开文件时|候产生的各种信息
+		}               |
+					    |
+		struct file  * fd_array[NR_OPEN_DEFAULT];
+		
+		这是fd的数组，
+		fd_array[fd]===>struct file *
+
+		struct file每打开一次文件，就问产生一个file结构体
+		对象，将这个file结构体放大fd_array中，这个数组的
+		下标就是这个文件的文件描述符。这个file结构体就是
+		描述本次打开文件时候的各种信息的（打开方式，游标等）。
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
