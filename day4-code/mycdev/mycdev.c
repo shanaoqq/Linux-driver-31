@@ -15,6 +15,7 @@ unsigned int minor = 0;
 struct class *cls = NULL;
 struct device *dev = NULL;
 char kbuf[128] = {0};
+
 int mycdev_open(struct inode *inode, struct file *file)
 {
 	printk("%s:%s:%d\n",__FILE__,__func__,__LINE__);
