@@ -59,8 +59,6 @@ kernel:                               |
 		//同种设备的个数
 	};
 
-
-
 	问：在应用程序中read write ioctl close如何通过
 	fd找到驱动的fops并调用里面对应的函数的？
 	
@@ -92,15 +90,63 @@ kernel:                               |
 		对象，将这个file结构体放大fd_array中，这个数组的
 		下标就是这个文件的文件描述符。这个file结构体就是
 		描述本次打开文件时候的各种信息的（打开方式，游标等）。
+		struct file {
+			const struct file_operations	*f_op;
+			//操作方法结构体是从inode结构体获取的
+			unsigned int 		f_flags;
+			fmode_t			f_mode;
+			loff_t			f_pos;
+		}
 		
+	通过fd访问到驱动中的read write close的流程如下：	
+	fd-->fd_array[fd]--->file-->fops-->read write close;
 		
+
+	编写字符设备驱动的流程？（register_chrdev）
+	1.定义结构体
+		struct cdev cdev;
+		struct cdev *cdev = cdev_alloc(); 
+		//使用cdev_alloc在内核空间分配内存
+
+	2.结构体成员的初始化
+		void cdev_init(struct cdev *cdev, 
+			const struct file_operations *fops)
+		功能：初始化cdev的结构体，没有初始化设备号和设备的个数
+		参数：
+			@cdev:刚才分配好的结构体指针
+			@fops:操作方法结构体
+	3.申请设备号
+		1.静态申请（直接指定）
+		int register_chrdev_region(dev_t from,
+		unsigned count, const char *name)  
+		功能：静态申请（直接指定）
+		参数：
+			@from ：设备号的起始值
+			@count：设备的个数
+			@name ：名字cat /proc/devices
+		返回值：成功返回0 ，失败返回错误码
 		
+		2.动态申请（操作系统分配）
+		int alloc_chrdev_region(dev_t *dev, 
+			unsigned baseminor, unsigned count,                     
+            const char *name)
+		功能：.动态申请（操作系统分配）
+		参数：
+			@dev:返回申请到的第一个设备号
+			@baseminor:次设备号的起始值 3
+			@count:设备的个数
+			@name :名字cat /proc/devices
+		返回值：成功返回0 ，失败返回错误码
 		
-		
-		
-		
-		
-		
+	4.注册
+		int cdev_add(struct cdev *p, dev_t dev, 
+					unsigned count) 
+		功能：注册字符设备驱动
+		参数：
+			@p:cdev结构体指针
+			@dev:设备号
+			@count:设备的个数
+		返回值：成功返回0 ，失败返回错误码
 		
 		
 		
