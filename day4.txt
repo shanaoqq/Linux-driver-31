@@ -148,5 +148,23 @@ kernel:                               |
 			@count:设备的个数
 		返回值：成功返回0 ，失败返回错误码
 		
+	-----------------------------------------------
+	void cdev_del(struct cdev *p)	
+	功能：注销字符设备驱动
+	参数：
+		@p:cdev的结构体指针
 		
+		
+	void unregister_chrdev_region(dev_t from, unsigned count)
+	功能：释放设备号
+	参数：
+		@from：设备号的起始的值
+		@count:设备的个数
+		
+	void kfree(void *p)
+	功能：释放cdev_alloc分配的内存
+	参数：
+		@p:申请的内存的首地址。
+	
+	
 		
