@@ -152,9 +152,90 @@
 				 atomic_dec(&v) //减1
 				
 				
+	练习：
+		1.linux内核竞态的解决办法的实例		
 				
+【3】IO模型
+	非阻塞：不管硬件中的数据是否准备好，应用层
+			的read函数都会理解返回。
+			
+		open("设备文件"，O_RDWR|O_NONBLOCK);
+		read(fd,buf,sizeof(buf));
+	-------------------------------------------
+		driver_read()
+		{
+			if(file->f_flags & O_NONBLOCK){
+				将数据立即拷贝到用户空间即可
+				copy_to_user即可
+			}
+			
+		}
+	阻塞：当硬件的数据没有准备好的时候read函数不会
+	返回，此时这个进程就会进入休眠状态，当硬件的数据
+	准备好的时候会产生一个中断，在中断处理函数中唤醒
+	休眠的进程，休眠的进程就会从硬件中将数据读取到内核
+	空间，然后将这个数据在拷贝到用户空间。
+	
+		open("设备文件"，O_RDWR);
+		read(fd,buf,sizeof(buf));
+	-------------------------------------------
+		driver_read()
+		{
+			if(file->f_flags & O_NONBLOCK){
+				//报错返回
+				return -错误码；
+			}else{
+				//休眠
+				ret = wait_event_interruptible(wq,condition);
 				
-				
+			}
+			
+			将数据拷贝到用户空间即可。
+		}
+	
+	wait_queue_head_t wq;
+	//定义等待队列头
+	
+	init_waitqueue_head(&wq);
+	//初始化等待队列头
+	
+	wait_event(wq, condition) //不可中断的等待态
+	wait_event_interruptible(wq, condition)	//可中断的等待态
+	功能：让当前的进程休眠
+	参数：
+		@wq :等待队列头
+		（休眠的进程在内核中会被放到一个
+		队列中，这里的wq就是队列头）
+		@condition：条件为假，要休眠
+		            为真，不需要休眠（数据准备好了）
+	返回值：成功返回0，失败返回错误码
+		
+		
+	wake_up(&wq)	
+	wake_up_interruptible(&wq)	
+	功能：唤醒休眠的进程
+	参数：
+		@等待队列头
+		
+
+		
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 				
 				
 		

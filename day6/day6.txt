@@ -1,0 +1,81 @@
+【1】IO多路复用
+	
+	IO多路复用：在同一app应用程序中想同时监听多个文件描述符，
+	使用select、poll、epoll在监听，如果数据都没有准备好，select
+	poll、epoll就会阻塞。当硬件的数据准备好的时候就会产生中断，
+	在驱动的中断处理函数中唤醒select、poll、epoll即可。当他们
+	被唤醒之后，然后判断文件描述符的集合中哪个文件描述的数据准备
+	好了，如果数据准备好了，就从硬件将将数据读取到用户空间即可。
+	
+	fd1 = open("mma",权限);
+	fd2 = open("mpu",权限);
+	将fd1和fd2放入到文件描述符的集合中（读表）
+	select(maxfd+1,&读表,NULL,NULL,NULL);
+	if(FD_ISSET(fd1,读表)){
+		read(fd1，buf,sizeof(buf));
+	}
+	if(FD_ISSET(fd2,读表)){
+		read(fd2，buf,sizeof(buf));
+		
+	}
+	------------------------------------------------
+	vfs:
+		sys_select:
+		1.在内核空间分配表的内存，然后调用copy_from_user
+		将用户空间的文件描述符表拷贝到内核空间。
+		
+		2.从文件描述符表中取出文件描述符
+			fd1 fd2 fd3
+			
+			fd1-->fd_array[fd1]--->file--->poll(指针)-->driver1_poll()
+			ret1  = driver1_poll();
+			
+			ret1=0 ret2=0 ret3=0 进程休眠
+			在虚拟文件系统层，实现了poll_table结构体
+			调用driver1和driver2中的poll,如果得到的结果都是
+			0，表示两个驱动的数据都没有准备好，如果数据都没
+			准备好就将进程休眠。
+		
+		3.休眠的进程被驱动的wake_up 唤醒
+			当某一个时间点有一个或者多个进程同时调用wake_up
+			唤醒了这个休眠的进程。然后它会重新全部调用一下
+			驱动中的poll函数，获取到返回值,
+			fd1 fd2 fd3
+			
+			fd1-->fd_array[fd1]--->file--->poll(指针)-->driver1_poll()
+			ret1  = driver1_poll();
+			
+			ret1=POLLIN ret2=0 ret3=POLLIN 
+			
+			将ret1 ret3对应的文件描述符找到fd1 fd3，
+			并将fd1 fd3放到文件描述符表中
+			
+		4.将文件描述符表返回到用户空间copy_to_user。
+	-------------------------------------------------
+	驱动：
+		  driver1             driver2
+		driver1_open         driver2_open
+		dirver1_poll         dirver2_poll
+		driver1_read         driver2_read
+		
+		wake_up              wake_up
+		
+	unsigned int (*poll) (struct file *, struct poll_table_struct *);
+		
+	grep ".poll = " * -nR
+	//搜索内核中已经实现的poll函数，通过内核实现的poll函数
+	//来完成自己的poll函数
+		
+	通过上述代码参考知道，在poll函数中实现的步骤如下
+		1.定义mask=0
+		
+		2.调用poll_wait，不会阻塞，它只是完成等待队列头的提交
+		
+		3.当条件为真设置mask
+			if(condition == 1){
+				mask = POLLIN/POLLOUT;
+			}
+			
+		4.返回mask
+		
+		
