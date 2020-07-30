@@ -32,16 +32,16 @@ int main(int argc, const char *argv[])
 	while(1){
 		if((ret = epoll_wait(epfd,revents,ARRAY_SIZE(revents),-1))<0)
 			PRINT_ERR("epoll wait");
-		
-			for(i=0; i<ret; i++){
-				if(revents[i].events & EPOLLIN){
-					memset(buf,0,sizeof(buf));
-					read(revents[i].data.fd,buf,sizeof(buf));
-					printf("buf%d = %s\n",revents[i].data.fd,buf);
-				}
+
+		for(i=0; i<ret; i++){
+			if(revents[i].events & EPOLLIN){
+				memset(buf,0,sizeof(buf));
+				read(revents[i].data.fd,buf,sizeof(buf));
+				printf("buf%d = %s\n",revents[i].data.fd,buf);
 			}
+		}
 	}
-	
+
 	close(epfd);
 
 	return 0;
