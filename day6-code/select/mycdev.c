@@ -16,8 +16,8 @@ unsigned int minor = 0;
 struct class *cls = NULL;
 struct device *dev = NULL;
 char kbuf[128] = {0};
-int condition = 0; //????
-wait_queue_head_t wq; //?????È´?????Í·
+int condition = 0; //Ìõ¼ş
+wait_queue_head_t wq; //¶¨ÒåµÈ´ı¶ÓÁĞÍ·
 
 int mycdev_open(struct inode *inode, struct file *file)
 {
@@ -30,19 +30,19 @@ ssize_t mycdev_read(struct file *file, char __user *ubuf,
 	int ret;
 	printk("%s:%s:%d\n",__FILE__,__func__,__LINE__);
 
-	//1.?Ğ¶??Ã»??ò¿ªµÄ·?Ê½
+	//1.ÅĞ¶ÏÓÃ»§´ò¿ªµÄ·½Ê½
 	if(file->f_flags & O_NONBLOCK){
 		return -EINVAL;
 	}else{
-		//2.?????????ã£¬????
-		wait_event(wq,condition);
-		/*if(ret){
+		//2.Ìõ¼ş²»Âú×ã£¬ĞİÃß
+		ret = wait_event_interruptible(wq,condition);
+		if(ret){
 			printk("wait error\n");
 			return ret;
-		}*/
+		}
 	}
 
-	//3.???û±»»½???Ë¾Í½????İ¿??????Ã»??Õ¼?
+	//3.Èç¹û±»»½ĞÑÁË¾Í½«Êı¾İ¿½±´µ½ÓÃ»§¿Õ¼ä
 	if(size > sizeof(kbuf)) size = sizeof(kbuf);
 	ret = copy_to_user(ubuf,kbuf,size);
 	if(ret){
@@ -50,7 +50,7 @@ ssize_t mycdev_read(struct file *file, char __user *ubuf,
 		return -EIO ; //è¿”å›é”™è¯¯ç 
 	}
 
-	condition  = 0; //??????????Îª??
+	condition  = 0; //½«Ìõ¼şÉèÖÃÎª¼Ù
 
 	return size;
 }
@@ -69,8 +69,8 @@ ssize_t mycdev_write(struct file *file,
 	}
 	printk("kbuf = %s\n",kbuf);
 
-	condition = 1; //??????????Îª??
-	wake_up(&wq); //???Ñ¶???
+	condition = 1; //½«Ìõ¼şÉèÖÃÎªÕæ
+	wake_up_interruptible(&wq); //»½ĞÑ¶ÓÁĞ
 	
 	return size;
 }
@@ -91,7 +91,7 @@ static int __init mycdev_init(void)
 {
 	int ret,i;
 	dev_t devno;
-	//1.????????????
+	//1.·ÖÅäÇı¶¯¶ÔÏó
 	cdev = cdev_alloc();
 	if(cdev == NULL){
 		printk("alloc cdev memory error\n");
@@ -99,12 +99,12 @@ static int __init mycdev_init(void)
 		goto ERR_STP0;
 	}
 	
-	//2.?Ö·??è±¸?????Ä³?Ê¼??
+	//2.×Ö·ûÉè±¸Çı¶¯µÄ³õÊ¼»¯
 	cdev_init(cdev, &fops);
 	
-	//3.?????è±¸??
+	//3.ÉêÇëÉè±¸ºÅ
 	if(major > 0){
-		//??Ì¬?????è±¸??
+		//¾²Ì¬ÉêÇëÉè±¸ºÅ
 		ret = register_chrdev_region(MKDEV(major,minor),count,CDEVNAME);
 		if(ret){
 			printk("static:alloc device number error\n");
@@ -112,7 +112,7 @@ static int __init mycdev_init(void)
 			goto ERR_STP1;
 		}
 	}else{
-		//??Ì¬?????è±¸??
+		//¶¯Ì¬ÉêÇëÉè±¸ºÅ
 		ret = alloc_chrdev_region(&devno,0,
 			count,CDEVNAME);
 		if(ret){
@@ -125,7 +125,7 @@ static int __init mycdev_init(void)
 	}
 
 		
-	//4.?Ö·??è±¸??????×¢??
+	//4.×Ö·ûÉè±¸Çı¶¯µÄ×¢²á
 	ret = cdev_add(cdev,MKDEV(major,minor),count);
 	if(ret){
 		printk("register char device driver error\n");
@@ -133,7 +133,7 @@ static int __init mycdev_init(void)
 		goto ERR_STP2;
 	}
 
-	//5.?????è±¸?Úµ?
+	//5.´´½¨Éè±¸½Úµã
 	cls = class_create(THIS_MODULE,CDEVNAME);
 	if(IS_ERR(cls)){
 		printk("class create error\n");
@@ -152,10 +152,10 @@ static int __init mycdev_init(void)
 		
 	}   //mycdev0 mycdev1 mycdev2
 
-	//6??Ê¼???È´?????Í·
+	//6³õÊ¼»¯µÈ´ı¶ÓÁĞÍ·
 	init_waitqueue_head(&wq);
 	
-	return 0; //×¢?â£¬Ç§??????????Ğ´
+	return 0; //×¢Òâ£¬Ç§Íò²»ÄÜÍü¼ÇĞ´
 	
 ERR_STP4:
 	for(--i;i>=0;i--){
@@ -177,16 +177,16 @@ static void __exit mycdev_exit(void)
 {
 	int i=3;
 
-	//1.?è±¸?Úµ???×¢??
+	//1.Éè±¸½ÚµãµÄ×¢Ïú
 	for(--i;i>=0;i--){
 		device_destroy(cls,MKDEV(major,i));
 	}
 	class_destroy(cls);	
-	//2.?Ö·??è±¸??????×¢??
+	//2.×Ö·ûÉè±¸Çı¶¯µÄ×¢Ïú
 	cdev_del(cdev);
-	//3.?Í·??è±¸??
+	//3.ÊÍ·ÅÉè±¸ºÅ
 	unregister_chrdev_region(MKDEV(major,minor),count);
-	//4.?Í·Å¶??????Ú´?
+	//4.ÊÍ·Å¶ÔÏóµÄÄÚ´æ
 	kfree(cdev);
 	
 }

@@ -33,12 +33,12 @@ __attribute__((section("__versions"))) = {
 	{ 0x23e259c8, "cdev_alloc" },
 	{ 0xe45f60d8, "__wake_up" },
 	{ 0x362ef408, "_copy_from_user" },
+	{ 0x2f287f0d, "copy_to_user" },
 	{ 0x75bb675a, "finish_wait" },
 	{ 0x622fa02a, "prepare_to_wait" },
 	{ 0x4292364c, "schedule" },
 	{ 0xc8b57c27, "autoremove_wake_function" },
 	{ 0xe7a0f60c, "current_task" },
-	{ 0x2f287f0d, "copy_to_user" },
 	{ 0x50eedeb8, "printk" },
 	{ 0xb4390f9a, "mcount" },
 };
@@ -49,4 +49,4 @@ __attribute__((section(".modinfo"))) =
 "depends=";
 
 
-MODULE_INFO(srcversion, "0269B13002DD3E15391EE06");
+MODULE_INFO(srcversion, "4463A1C00AE66A635951C0C");
