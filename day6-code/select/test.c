@@ -31,20 +31,18 @@ int main(int argc, const char *argv[])
 			perror("select error");
 			return -1;
 		}
-		printf("--------------\n");
 
 		if(FD_ISSET(fd,&rfds)){ //判断文件描述符是否准备好了
 			memset(buf,0,sizeof(buf));
 			read(fd,buf,sizeof(buf));
 			printf("mycdev0 buf = %s\n",buf);
 		}
-		printf("--------------\n");
+		
 		if(FD_ISSET(fd1,&rfds)){ //判断文件描述符是否准备好了
 			memset(buf,0,sizeof(buf));
 			read(fd1,buf,sizeof(buf));
 			printf("mouse0 buf = %s\n",buf);
 		}
-		printf("--------------\n");
 
 	}
 

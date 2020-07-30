@@ -671,6 +671,9 @@ deps_/home/linux/Linux-driver-31/day6-code/select/mycdev.o := \
   include/linux/aio.h \
   include/linux/aio_abi.h \
   include/linux/uio.h \
+  include/linux/poll.h \
+  /usr/src/linux-headers-3.5.0-23-generic/arch/x86/include/asm/poll.h \
+  include/asm-generic/poll.h \
 
 /home/linux/Linux-driver-31/day6-code/select/mycdev.o: $(deps_/home/linux/Linux-driver-31/day6-code/select/mycdev.o)
 
