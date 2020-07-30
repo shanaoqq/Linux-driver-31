@@ -1,5 +1,4 @@
 【1】IO多路复用
-	
 	IO多路复用：在同一app应用程序中想同时监听多个文件描述符，
 	使用select、poll、epoll在监听，如果数据都没有准备好，select
 	poll、epoll就会阻塞。当硬件的数据准备好的时候就会产生中断，
@@ -77,5 +76,64 @@
 			}
 			
 		4.返回mask
-		
-		
+	
+	
+【2】epoll的使用：
+	 #include <sys/epoll.h>
+	 
+	 int epoll_create(int size);
+	 功能：创建一个epoll的实例
+	 参数：
+		@size:已经不再使用，可以填写任意值
+	 返回值：成功返回epoll的文件描述符，失败返回-1；
+	 
+	 int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+	 功能：控制箱epfd中添加、修改、删除本次要监听的事件的类型
+	 参数：
+		@epfd:epoll的文件描述符
+		@op  :EPOLL_CTL_ADD 添加事件
+			  EPOLL_CTL_MOD 修改事件 
+			  EPOLL_CTL_DEL 删除事件
+		@fd  :文件描述符
+		@event:事件的结构体对象
+		    struct epoll_event {
+               uint32_t     events; //EPOLLIN EPOLLOUT
+               epoll_data_t data;        /* User data variable */
+           };
+
+	 返回值：成功返回0，失败返回-1
+	  
+	 int epoll_wait(int epfd, struct epoll_event *revents,
+                      int maxevents, int timeout);
+	 功能：完成阻塞，如果有数据准备好，就返回
+	 参数：
+		@epfd     :epoll的文件描述符
+		@revents  :返回的事件结构体
+		@maxevents:最大的结构体个数
+		@timeout  :超时时间
+	返回值：1.成功返回准备好的文件描述符的个数
+			2.超时返回0
+			3.失败返回-1；
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+	
+	
+	
+	
