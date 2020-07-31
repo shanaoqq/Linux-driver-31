@@ -57,4 +57,143 @@
 	按键中断：
 		gpiob8   左键
 		gpiob16  右键	
+		
+----------------------------------------------------------------------------
+PM:
+【1】在安装驱动的时候错误：
+	1.提示的错误是：资源繁忙（146中断被占用）
+	
+	2.通过命令  cat /proc/interrupts
+			"nxp-keypad"
+		
+	3.在内核中通过搜索找到了驱动的文件
+		nxp_io_key.c
+		
+		通过Makefile知道选项名KEYBOARD_NXP_KEY
+		                                                       │  
+  │ Type  : tristate                                                                           │  
+  │ Prompt: SLsiAP push Keypad support                                                         │  
+  │   Defined at drivers/input/keyboard/Kconfig:583                                            │  
+  │   Depends on: !S390 && !UML && INPUT [=y] && INPUT_KEYBOARD [=y] && ARCH_CPU_SLSI [=y]     │  
+  │   Location:                                                                                │  
+  │     -> Device Drivers                                                                      │  
+  │       -> Input device support                                                              │  
+  │         -> Generic input layer (needed for keyboard, mouse, ...) (INPUT [=y])              │  
+  │           -> Keyboards (INPUT_KEYBOARD [=y])  
+		
+	4.将上述路径的	SLsiAP push Keypad support 前的*去掉
+	
+	5.重新编译内核
+		make uImage
+		
+	6.将uImage文件拷贝到tftpboot目录
+	
+	7.让开发板重新上电
+	
+	8.重新安装驱动
+		insmod farsight_irq.ko
+	
+	
+【2】按键消抖
+	由于在中断的处理函数中不能有延时或者耗时操作。
+	这里的按键消抖不能使用延时完成。可以使用linux
+	内核定时器来完成消抖。
+	
+【3】linux内核定时器
+	1.内核定时器当前时间如何获取？
+		jiffies：内核时钟节拍数，从linux内核上电开始
+		这个值一直会增加。jiffies是一个64位的整数。
+		
+	2.内核定时器加1代表走多长时间？
+		在内核的顶层目录.config这个文件CONFIG_HZ=1000，
+		它就是内核定时器的频率值
+		
+		A53 = 内核定时器加1代表走了1ms的时间。
+		ubuntu = 内核定时器加1代表走了4ms的时间。
+		
+		
+	1.内核定时器的对象
+		struct timer_list {
+			unsigned long expires;  //定时的时间
+			void (*function)(unsigned long data);//定时器的处理函数
+			unsigned long data;	  //向定时器处理函数传递的参数	
+		}		
+		struct timer_list mytimer;		
+	2.初始化
+		void timer_function(unsigned long data)
+		{
 			
+		}
+		mytimer.expires = jiffies+10;
+		mytimer.function  = timer_function;
+		mytimer.data = 0;
+		
+		init_timer(&mytimer); //初始化定时器中其他的成员
+		
+		
+	3.定时器的注册
+		add_timer(struct timer_list *timer)
+		定时器注册，定时器就会启动了，并且只会执行一次
+		定时器只能被注册一次，如果下一次在注册定时器，此时
+		linux内核就崩溃了。
+	
+	4.重新启动定时器
+		int mod_timer(struct timer_list *timer, unsigned long expires)
+		参数：
+			@timer :定时器结构体指针
+			@expires:下一次定时的时间
+		返回值：如果定时器再次启动成功了返回1，否则返回0
+		
+	5.定时器的删除
+		int del_timer(struct timer_list *timer)
+		功能：注销定时器
+		参数：
+			@timer :定时器结构体指针
+		返回值：删除不活动的定时器返回1，删除活动的定时器返回0；
+		
+		
+【4】gpio子系统（gpiolib.c）
+	int gpio_request(unsigned gpio, const char *label)
+	功能：申请一个gpio去使用
+	参数：
+		@gpio :gpio的编号
+		@label:名字，NULL
+	返回值：成功返回0，失败返回错误码
+	
+	
+	int gpio_direction_input(unsigned gpio)
+	功能：设置gpio为输入
+	参数：
+		@gpio ：gpio编号
+	返回值：成功返回0，失败返回错误码
+		
+		
+	int gpio_direction_output(unsigned gpio, int value)	
+	功能：设置gpio为输出
+	参数：
+		@gpio ：gpio编号
+		@value: 1输出高  0输出低
+	返回值：成功返回0，失败返回错误码	
+	
+	void gpio_set_value(unsigned gpio, int value)
+	功能：设置gpio输出的高低电平
+	参数：
+		@gpio ：gpio编号
+		@value: 1输出高  0输出低
+		
+	int gpio_get_value(unsigned gpio)
+	功能：获取gpio的高低电平的值
+	参数：
+		@gpio ：gpio编号
+	返回值：读到1表示输出高电平  读到0表示输出低
+
+	void gpio_free(unsigned gpio)
+	功能：释放gpio
+	参数：
+		@gpio ：gpio编号
+
+
+
+
+
+	
