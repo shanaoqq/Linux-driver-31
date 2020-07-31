@@ -1,0 +1,60 @@
+【1】Linux内核中的中断
+	linux内核中的中断和ARM课程中学习的裸机中的
+	的原理是一样的，都需要遵从四大步三小步骤。
+	
+	
+	在linux内核中注册中断处理函数
+	int request_irq(unsigned int irq, irq_handler_t handler, 
+		unsigned long flags,const char *name, void *dev)
+	功能：在linux内核中注册中断处理函数
+	参数：
+		@irq  :软中断号：根据gpio号通过映射得到软中断号
+					A    B    C    D   E
+			组号m:	0    1    2    3   4
+			A组内偏移号n: 0 - 31
+			
+			gpio的编号 = 组号*32+组内偏移号
+			gpioc18:   =  2*32+18
+			
+			将gpio号映射成软中断号：
+			软中断号 = gpio_to_irq(gpio号);
+	    @handler:中断处理函数的指针
+			typedef irqreturn_t (*irq_handler_t)(int, void *);
+			
+			中断函数
+			@irqno :软中断号
+			@args  :request_irq最后一个参数传递过来的值
+			irqreturn_t handle_key_irq(int irqno, void * args)
+			{                        
+				return  IRQ_NONE  ：
+						1.中断处理函数执行失败，返回IRQ_NONE
+						2.如果是共享中断，同时有两个中断处理函数，
+						  都被同时触发了，不需要执行中断处理函数
+						  的设备就返回IRQ_NONE
+				return  IRQ_HANDLED  :中断正常执行成功了
+			}
+			
+		@flags ：中断的触发方式
+				#define IRQF_TRIGGER_NONE	0x00000000
+				#define IRQF_TRIGGER_RISING	0x00000001
+				#define IRQF_TRIGGER_FALLING	0x00000002
+				#define IRQF_TRIGGER_HIGH	0x00000004
+				#define IRQF_TRIGGER_LOW	0x00000008
+				#define IRQF_DISABLED		0x00000020 #快速中断，在处理本中断的时候关闭其他中断
+				#define IRQF_SHARED		0x00000080     #共享中断
+			
+		@name  :中断的名字   cat /proc/interrupts（最后一个字段）
+		@dev   :向中断处理函数传递的参数
+			
+	返回值：成功返回0，失败返回错误码		
+	
+	void free_irq(unsigned int irq, void *dev_id)	
+	功能：释放中断
+	参数：
+		@irq  ：软中断号
+		@dev_id：中断处理函数最后一个成员传递的参数
+			
+	按键中断：
+		gpiob8   左键
+		gpiob16  右键	
+			
