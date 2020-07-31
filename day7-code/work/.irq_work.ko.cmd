@@ -1,0 +1,1 @@
+cmd_/home/linux/Linux-driver-31/day7-code/work/irq_work.ko := arm-none-linux-gnueabi-ld -EL -r  -T /home/linux/kernel/kernel-3.4.39/scripts/module-common.lds --build-id  -o /home/linux/Linux-driver-31/day7-code/work/irq_work.ko /home/linux/Linux-driver-31/day7-code/work/irq_work.o /home/linux/Linux-driver-31/day7-code/work/irq_work.mod.o
