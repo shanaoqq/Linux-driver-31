@@ -181,8 +181,28 @@ static void __exit pdrv_exit(void)
 module_exit(pdrv_exit);
 
 
-
-
+【7】i2c硬件知识回顾
+	1.几根线
+		scl :时钟线
+		sda :数据线
+	2.几种信号
+		起始信号：
+			在scl为高电平的时候，sda从高到低的跳变
+		停止信号：
+			在scl为高电平的时候，sda从低到高的跳变
+		应答信号：
+			sda为低电平
+	3.两种时序
+		写时序：
+			start +7bit从机地址（0写）+ack+reg(8bit)+ack+data+ack+stop
+		
+		读时序：
+			start +7bit从机地址（0写）+ack+reg(8bit)+ack+
+			start +7bit从机地址（1读）+ack+从机给主机反馈data+NO ack+stop
+	
+	4.i2c传输速率
+		100K   400K   3.4M
+			
 
 
 
