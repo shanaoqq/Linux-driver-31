@@ -64,6 +64,7 @@
 	----------------------------------------------------
 	
 	设备信息端 ： 
+		
 		1.分配对象
 		struct platform_device {
 			const char	* name;
@@ -92,10 +93,16 @@
 			#define IORESOURCE_IRQ	0x00000400  中断资源
 			#define IORESOURCE_DMA	0x00000800  DMA资源
 			
+			pdev.dev.release =  释放资源的函数、如果不写卸载驱动的时候会崩溃
+			void	(*release)(struct device *dev);
 			
 		3.对象的注册
+			int platform_device_register(struct platform_device *pdev);
 		4.对象注销
-	
+			void platform_device_unregister(struct platform_device *pdev)
+			
+			
+			
 	设备驱动端 ：
 		1.分配对象
 		2.对象的初始化
