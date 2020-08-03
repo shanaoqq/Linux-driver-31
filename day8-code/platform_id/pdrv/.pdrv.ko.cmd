@@ -1,0 +1,1 @@
+cmd_/home/linux/Linux-driver-31/day8-code/platform_id/pdrv/pdrv.ko := arm-none-linux-gnueabi-ld -EL -r  -T /home/linux/kernel/kernel-3.4.39/scripts/module-common.lds --build-id  -o /home/linux/Linux-driver-31/day8-code/platform_id/pdrv/pdrv.ko /home/linux/Linux-driver-31/day8-code/platform_id/pdrv/pdrv.o /home/linux/Linux-driver-31/day8-code/platform_id/pdrv/pdrv.mod.o
