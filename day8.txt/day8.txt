@@ -1,0 +1,111 @@
+【1】复习
+	1.中断
+		request_irq(irqno,中断处理函数,中断触发方式,名字,传递的参数);
+		free_irq(irqno,传递的参数);
+	
+	2.内核定时
+		struct timer_list mytimer;
+		mytimer.expires = jiffies + HZ; (1s)  //# define HZ CONFIG_HZ	
+		mytimer.function = timer_function;  //当定时时间到了会执行
+		mytimer.data = 0; //一般用于传递下一次的定时的时间
+		init_timer(&mytimer);
+		add_timer(&mytimer); //启动定时器，并只会执行一次
+		mod_timer(&mytimer,下一次定时的时间);再次启动定时器
+		del_timer(&mytimer);
+	
+	3.gpio子系统
+		gpio_request(gpio,NULL);
+		gpio_direction_input(gpio);
+		gpio_driection_output(gpio,value);
+		gpio_set_value(gpio,value);
+		gpio_get_value(gpio);
+		gpio_free(gpio);
+		
+	4.中断底半部
+		软中断，tasklet ,工作队列
+		
+		tasklet:
+			struct tasklet_struct tasklet;
+			tasklet_init(&tasklet,tasklet底半部处理函数,传递的参数);
+			tasklet_schedule(struct tasklet_struct *tasklet)
+			
+		工作队列：	
+			struct work_struct work;
+			INIT_WORK(&work, 工作队列的底半部处理函数);
+			schedule_work(&work); 
+				
+	作业：	
+		1.编写ADC的驱动（使用中断）
+			
+【2】控制器的软中断号的获取方式
+		find -name irqs.h
+			
+		./arch/arm/mach-s5p6818/include/mach/irqs.h
+		#include "s5p6818_irq.h"        
+
+		find -name s5p6818_irq.h
+		./arch/arm/mach-s5p6818/include/mach/s5p6818_irq.h
+
+		#define IRQ_PHY_ADC   (41 + 32)  //ADC的软中断号
+		
+
+【3】platform总线驱动
+	platform：就是将设备信息和设备驱动分离，实现这个设备驱动通用。
+	设备信息和设备驱动通过platform bus完成匹配的过程。通过设备信息
+	和设备驱动中的名字匹配，当匹配成功之后设备信息端就会携带着信息
+	到设备驱动中，并执行设备驱动中的probe函数，在probe函数中操作硬件
+	即可。当设备信息和设备驱动分离的时候执行驱动中的remove函数。
+	
+	----------------------------------------------------   
+					|                |
+	设备信息端      | platform总线端 |设备驱动端
+	驱动工程师实现的|内核工程师实现的|驱动工程师实现的
+					|                |
+	----------------------------------------------------
+	
+	设备信息端 ： 
+		1.分配对象
+		struct platform_device {
+			const char	* name;
+			int		id;
+			struct device	dev;
+			u32		num_resources;
+			struct resource	* resource;
+		};
+		struct platform_device  pdev;
+		2.对象的初始化
+			pdev.name  名字，用户匹配
+			pdev.id    -1,platform是内核制作出来的，没有真实的硬件存在，填写-1（序号）
+			pdev.num_resources 资源的个数
+			pdev.resource  描述的资源
+			
+			struct resource {     //设备信息结构体                                                                              
+				resource_size_t start; //起始的资源，需要填写
+				resource_size_t end;   //结束的资源，需要填写
+				const char *name;      //名字
+				unsigned long flags;   //资源的类型，需要填写
+				struct resource *parent, *sibling, *child; //内核链表
+			};
+
+			#define IORESOURCE_IO	0x00000100  IO口资源
+			#define IORESOURCE_MEM	0x00000200  内存资源
+			#define IORESOURCE_IRQ	0x00000400  中断资源
+			#define IORESOURCE_DMA	0x00000800  DMA资源
+			
+			
+		3.对象的注册
+		4.对象注销
+	
+	设备驱动端 ：
+		1.分配对象
+		2.对象的初始化
+		3.对象的注册
+		4.对象注销	
+	
+
+
+
+
+		
+		
+	
