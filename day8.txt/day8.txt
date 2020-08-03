@@ -105,10 +105,27 @@
 			
 	设备驱动端 ：
 		1.分配对象
+		struct platform_driver {
+			int (*probe)(struct platform_device *);
+			int (*remove)(struct platform_device *);
+			struct device_driver driver;
+			const struct platform_device_id *id_table;
+		};
+		struct platform_driver pdrv;
+		
 		2.对象的初始化
+			pdrv.probe=pdrv_probe //匹配成功执行的函数
+			pdrv.remove = pdrv_remove //分离的时候执行的函数
+			pdrv.driver.name          //1.用于匹配的名字
+			pdrv.id_table             //2.用于匹配的
+			//pdrv.driver.of_match_table//3.设备树匹配
+			
+			
 		3.对象的注册
+			platform_driver_register(&pdrv);
+			
 		4.对象注销	
-	
+			platform_driver_unregister(&pdrv);
 
 
 
