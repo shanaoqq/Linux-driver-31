@@ -82,6 +82,7 @@ hardware ：	i2c控制器                         mma8451q
 		mma8451q.probe = mma8451q_probe //匹配成功后执行的函数
 		mma8451q.remove = mma8451q_remove//分离执行的函数
 		mma8451q.driver.name = "名字"   //这个名字不能用于匹配，但是还必须初始化。
+										// /sys/bus/i2c/drivers/2-001c 
 		mma8451q.id_table = mma8451q_idtable //用于匹配
 		
 	3.注册
@@ -196,4 +197,26 @@ hardware ：	i2c控制器                         mma8451q
 	{
 		
 	}
-	
+
+【6】i2c_client结构体
+	当设备驱动i2c_driver和总线驱动i2c_adapter匹配成功之后
+	在内核中就会创建一个i2c_client的结构体，这个结构体就是
+	用来保存匹配成功后的信息的。
+	struct i2c_client {
+		unsigned short addr; //从机地址
+		char name[I2C_NAME_SIZE];//名字
+		struct i2c_adapter *adapter;//匹配成功的总线驱动的对象
+		struct i2c_driver *driver;	//匹配成功的驱动端的对象
+	};
+
+
+
+
+
+
+
+
+
+
+
+
