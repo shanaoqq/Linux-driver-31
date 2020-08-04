@@ -41,8 +41,7 @@
 		platform_driver_unregister(&pdrv);
 	
 【2】i2c的驱动框架
-
-user	
+user:	
 		open   read   write   close
 ------------------------------------------------------------------		
 kernel	
@@ -69,4 +68,132 @@ hardware ：	i2c控制器                         mma8451q
 	
 	 // s3c2410  s3c6410  s5pv210   exynos4412   s5p6818
 
+【3】i2c设备驱动的实现
+	1.分配的对象
+		struct i2c_driver {
+			int (*probe)(struct i2c_client *, const struct i2c_device_id *);
+			int (*remove)(struct i2c_client *);
+			struct device_driver driver;
+			const struct i2c_device_id *id_table;
+		};
+
+		struct i2c_driver mma8451q;
+	2.初始化对象
+		mma8451q.probe = mma8451q_probe //匹配成功后执行的函数
+		mma8451q.remove = mma8451q_remove//分离执行的函数
+		mma8451q.driver.name = "名字"   //这个名字不能用于匹配，但是还必须初始化。
+		mma8451q.id_table = mma8451q_idtable //用于匹配
+		
+	3.注册
+		i2c_add_driver(&mma8451q);
+	
+	4.注销
+		i2c_del_driver(&mma8451q);
+	
+	
+	一键注册、注销
+		module_i2c_driver(mma8451q);
+
+
+【4】i2c控制器驱动名字的提交
+	struct i2c_board_info {
+		char		type[I2C_NAME_SIZE]; //提交的名字
+		unsigned short	addr;            //从机地址
+	};
+
+	int i2c_register_board_info(int busnum,
+		struct i2c_board_info const *info, unsigned len)
+	功能：向控制器提交名字
+	参数：
+		@busnum :总线号（它和控制器的序号一一对应） 2
+		@info   :被提交的信息
+		@len    :提交的i2c_board_info的个数
+	返回值：成功返回0，失败返回错误码	
+
+
+	通用存放设备信息的文件：
+	arch/arm/plat-s5p6818/fs6818$ vi device.c
+	 716 /*-----------------------------------------
+	 717  * G-Sensor platform device
+	 718  */
+	 719 #include <linux/i2c.h>
+	 720 
+	 721 static struct i2c_board_info mma8451q = {                                                     
+	 722         .type   = "mma8451q",
+	 723         .addr   = 0x1c,
+	 724 };
+
+	1905 #elif defined(CONFIG_SENSORS_MMA8451) || defined(CONFIG_MXC_MMA8451_MODULE)
+	1906     printk("plat: add g-sensor mma8451\n");
+	-1907   //      i2c_register_board_info(2, &mma8451_i2c_bdi, 1);
+	1908 #endif
+	+1909      i2c_register_board_info(2, &mma8451q, 1);  
+
+	make uImage  编译内核
+	cp  arch/arm/boot/uImage ~/tftpboot/  拷贝
+	重启开发板 
+	
+	
+【5】i2c数据的封装和发送的过程
+	//https://www.cnblogs.com/aspirs/p/12371237.html
+	//7位 10位从机地址的访问问题
+	#define I2C_M_TEN		0x0010	/* this is a ten bit chip address */
+	#define I2C_M_RD		0x0001	/* read data, from slave to master */
+
+	struct i2c_msg {
+		__u16 addr;	  //从机地址
+		__u16 flags;  //读写的标志位 0写 I2C_M_RD读
+		__u16 len;	  //本次你要写的数据的长度
+		__u8 *buf;	  //消息的首地址
+	};
+	
+	*/有多少个起始位就有多少个消息，消息的长度是以字节来表示的 /*
+	
+	写的消息的封装：
+		char w_buf[] = {reg,data};
+		struct i2c_msg w_msg = {
+			.addr  = client->addr,
+			.flags = 0,
+			.len   = 2,
+			.buf   = w_buf,
+		};
+		
+	读的消息的封装：
+		char data;
+		char r_buf []= {reg};
+		struct i2c_msg r_msg[] = {
+			[0] = {
+				.addr  = client->addr,
+				.flags = 0,
+				.len   = 1,
+				.buf   = r_buf,
+			},
+			[1] = {
+				.addr  = client->addr,
+				.flags = I2C_M_RD,
+				.len   = 1,
+				.buf   = &data,
+			},
+		};
+	
+	消息发送：
+	int i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
+	功能：消息的发送函数
+	参数：
+		@adap ：总线驱动的对象  client->adapter
+		@msgs :消息结构体指针
+		@num  :消息的个数
+	返回值：成功返回发送了的消息的格式，
+			否者不是发送的消息的个数。
+	
+	//自己完成
+	int i2c_write_reg(char reg,char data)
+	{
+		
+	}
+	
+	int i2c_read_reg(char reg)
+	{
+		
+	}
 	
