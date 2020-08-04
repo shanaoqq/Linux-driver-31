@@ -187,16 +187,7 @@ hardware ：	i2c控制器                         mma8451q
 	返回值：成功返回发送了的消息的格式，
 			否者不是发送的消息的个数。
 	
-	//自己完成
-	int i2c_write_reg(char reg,char data)
-	{
-		
-	}
-	
-	int i2c_read_reg(char reg)
-	{
-		
-	}
+
 
 【6】i2c_client结构体
 	当设备驱动i2c_driver和总线驱动i2c_adapter匹配成功之后
