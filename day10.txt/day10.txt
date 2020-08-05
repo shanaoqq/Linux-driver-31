@@ -1,0 +1,154 @@
+【1】块设备
+	块设备的特点：
+		按照扇区来访问，访问的单位512字节
+		它可以顺序访问，也可以无序访问。
+		
+	块设备的硬件知识：
+	比如一个移动硬盘：
+	磁头：有多少个盘面
+	磁道：一个面内有多少环
+	扇区：一个环内有多少个扇区，一个扇区512字节
+	
+	磁盘的数据的读取：
+	磁盘数据的读取不会按照存储顺序来读取，因为磁头它是机械结构，
+	通过旋转来访问数据，如果按照数据来访问，需要反复的切换这个
+	物理结构，比较浪费时间。所以磁盘在访问的时候采用电梯优化的算法
+	来完成。即一次将一个盘面上的数据全部读取到，然后切换物理结构，
+	在读取下面的数据。将所有的数据读取完之后，进行数据的排序，排序
+	之后进行操作。
+
+
+	页 4K                    段 :可以包含多个block
+	block 512字节 1K 2K 4K   扇区 512字节
+	
+【2】块设备的框架结构
+user:
+	open    read   write   close  （一切皆文件）
+------------------|(io请求)----------------------
+kernel:|VFS:（struct block_device）
+	   |ext2   ext3   ext4   yaffs jiffs
+	   |
+	   |通过上述的文件系统就为将io请求转化成块
+	   |请求bio(block input out put),Linux内核就
+	   |把物理地址上连续的bio请求合成一个request。
+	   |request会被放到一个队列中。
+	   |-----------------------------------------
+	   |块设备驱动：struct gendisk
+	   |	1.分配的对象
+	   |    2.对象的初始化，初始化一个队列
+	   |	3.硬盘的硬件的操作
+	   |	4.注册、注销
+-------------------------------------------------
+hardware  ：   硬盘
+
+【3】块设备驱动的结构和函数
+	1.块设备结构体
+	struct gendisk {
+		int major;		  //主设备号
+		int first_minor;  //次设备号的起始值
+		int minors;       //设备的个数
+		char disk_name[DISK_NAME_LEN];//块设备的名字
+		struct disk_part_tbl  *part_tbl; //硬盘分区表
+		struct hd_struct part0;          //硬盘的一个分区
+		const struct block_device_operations *fops;
+										//块设备的操作方法结构体
+		struct request_queue *queue;    //请求队列
+		void *private_data;             //私有数据
+	};
+	2.分区结构体
+	struct hd_struct {
+		sector_t start_sect; //起始的扇区
+		sector_t nr_sects;   //扇区的个数
+		sector_t alignment_offset; //对齐的方式
+		int partno;          //分区号
+	};
+
+	3.操作方法结构体
+	struct block_device_operations {
+		int (*open) (struct block_device *, fmode_t);
+		int (*release) (struct gendisk *, fmode_t);
+		int (*ioctl) (struct block_device *, fmode_t, unsigned, unsigned long);
+		int (*getgeo)(struct block_device *, struct hd_geometry *);
+		//设置磁盘有多少个磁头，有多少个磁道，有多少扇区
+	};
+
+	
+	4.队列的操作的方法
+	struct request_queue *blk_init_queue(request_fn_proc *rfn, spinlock_t *lock)
+	功能：初始化一个队列
+	参数：
+		@rfn  ：队列处理函数
+		typedef void (request_fn_proc) (struct request_queue *q);
+		//这个是队列处理函数的原型，在这个函数中要进行读写操作
+		@lock ：自旋锁
+	返回值：成功返回初始化好的队列的指针
+			失败返回NULL
+			
+			
+	struct request *blk_fetch_request(struct request_queue *q)
+	功能：从队列中取出一个请求
+	参数：
+		@q :队列
+	返回值：成功返回request结构体指针
+			失败返回NULL
+	
+	void blk_cleanup_queue(struct request_queue *q)
+	功能：清除队列
+	参数：
+		@q:被清除的队列
+	返回值：无
+	
+	5.关于request的操作
+	 sector_t blk_rq_pos(const struct request *rq)
+	 功能：从请求中获取本次操作的起始的函数
+	
+	 unsigned int blk_rq_cur_sectors(const struct request *rq)
+	 功能：获取本次想读写的扇区的个数
+	 
+	 int blk_rq_cur_bytes(const struct request *rq)
+	 功能：获取本次想读写的字节的个数
+	
+	 rq_data_dir(rq)
+	 功能：从request中获取本次是读还是写
+	 rq_data_dir(rq) == READ  读
+	 rq_data_dir(rq) == WRITE 写
+	
+	bool __blk_end_request_cur(struct request *rq, 0)
+	功能：判断request的读写是否处理完了
+	参数：
+		@rq ：请求队列
+	返回值：真：表示数据没有处理完
+			假：数据处理完成了
+		
+
+	2.申请块设备的设备号
+	int register_blkdev(unsigned int major, const char *name)
+	功能：申请块设备的设备号
+	参数：
+		@major :如果填写的是大于0的值静态指定设备号
+				如果填写的是0表示动态申请设备号
+		@name  ：cat /proc/devices		
+	返回值：
+		major > 0   成功返回0，失败返回错误码
+		major = 0   成功返回主设备号，失败返回小于等于0的值
+		
+		
+	void unregister_blkdev(unsigned int major, const char *name)
+	功能：失败块设备的设备号
+	参数：
+		@major :主设备号
+		@name  :名字
+	返回值：无
+	
+	3.块设备驱动的注册/注销
+	void add_disk(struct gendisk *disk)
+	功能：注册gendisk
+	参数：
+		@disk :gendisk对象的地址
+	void del_gendisk(struct gendisk *disk)
+	功能：注销gendisk
+	参数：
+		@disk :gendisk对象的地址
+	
+			
+	
