@@ -3,6 +3,7 @@
 #include <linux/genhd.h>
 #include <linux/vmalloc.h>
 #include <linux/blkdev.h>
+#include <linux/hdreg.h>
 
 #define BLKNAME "mydisk"
 #define RAMSIZE (1*1024*1024)
@@ -98,7 +99,7 @@ static int __init mydisk_init(void)
 	mydisk->major = major;
 	mydisk->first_minor = 0;
 	strcpy(mydisk->disk_name,BLKNAME);
-	mydisk->fops = fops;
+	mydisk->fops = &fops;
 	mydisk->queue = req;
 	set_capacity(mydisk,RAMSIZE/512); //设置分区0的扇区的个数
 		

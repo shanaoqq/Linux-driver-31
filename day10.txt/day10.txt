@@ -120,7 +120,12 @@ hardware  ：   硬盘
 	返回值：真：表示数据没有处理完
 			假：数据处理完成了
 		
-
+	2.gendisk内存分配并初始化的函数
+		struct gendisk *alloc_disk(int minors)
+		功能：分配内存并初始一些内容
+		参数：
+			@minors :设备的个数
+			
 	2.申请块设备的设备号
 	int register_blkdev(unsigned int major, const char *name)
 	功能：申请块设备的设备号
@@ -149,7 +154,42 @@ hardware  ：   硬盘
 	功能：注销gendisk
 	参数：
 		@disk :gendisk对象的地址
-	
+
+
+	块设备驱动的测试：
+	1.安装驱动
+		sudo  insmod  mydisk.ko 
+	2.查看
+		cat /proc/devices
+		ls /dev/mydisk
+		sudo fdisk -l
+	3.分区
+		sudo fdisk /dev/mydisk
+		:m  --->打印帮助信息
+		:n  --->新建一个分区
+		:p  --->打印分区
+		:w  --->保存退出
+		:q  --->退出
+		
+	4.格式化
+		sudo mkfs.ext3 /dev/mydisk1
+	5.将磁盘挂载到一个目录下
+		sudo mount /dev/mydisk1 ~/udisk
+		
+		在udisk中存放文件和目录
+	6.取消挂载
+		sudo umount ~/udisk
+		
+	7.将刚才写进磁盘的数据给读出来
+		cat /dev/mydisk1 > mydisk_file.bin
+		
+	8.查看.bin中是否有文件
+		sudo mount -o loop mydisk_file.bin ~/udisk
+		在udisk中可以看到刚才写进入的文件和目录
+		表示块设备驱动是成功的。
+
+
+
 ---------------------------------------------------------------------
 内存分配的函数：
 	虚拟内存：
